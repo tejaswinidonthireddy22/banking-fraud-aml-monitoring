@@ -43,7 +43,7 @@ lol-bank-fraud-detection/
 ```
 Tech Stack
 
-Python: pandas, NumPy, openpyxl, matplotlib, seaborn
+Python: pandas, ( for Data Loading & Exploratory Data Analysis (Python))
 SQL:  MySQL  (for transaction analytics and reporting)
 Power BI: Interactive dashboards and KPI visualizations
 Excel: Advanced reporting & KPI dashboards
