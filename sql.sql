@@ -5,25 +5,24 @@
 -- ═══════════════════════════════════════════════════════
 
 -- 1. OVERALL SUMMARY
-SELECT
-    COUNT(*) AS Total_Transactions,
-    SUM(Is_Fraud) AS Fraud_Cases,
-    ROUND(SUM(Is_Fraud) * 100.0 / COUNT(*), 2) AS Fraud_Rate_Pct,
-    ROUND(AVG(Transaction_Amount), 2) AS Avg_Transaction_Amount,
-    ROUND(SUM(CASE WHEN Is_Fraud=1 THEN Transaction_Amount ELSE 0 END), 2) AS Total_Fraud_Amount
-FROM transactions;
-
--- 2. FRAUD BY STATE
-SELECT
+SELECT 
     State,
     COUNT(*) AS Total_Transactions,
     SUM(Is_Fraud) AS Fraud_Count,
-    ROUND(SUM(Is_Fraud) * 100.0 / COUNT(*), 2) AS Fraud_Rate_Pct,
-    ROUND(AVG(Transaction_Amount), 2) AS Avg_Amount,
-    ROUND(SUM(CASE WHEN Is_Fraud=1 THEN Transaction_Amount ELSE 0 END), 2) AS Fraud_Amount
-FROM transactions
+    ROUND(SUM(Is_Fraud) * 100.0 / COUNT(*), 2) AS Fraud_Rate_Percentage,
+    ROUND(AVG(Transaction_Amount), 2) AS Avg_Transaction_Amount
+FROM   fraud
 GROUP BY State
 ORDER BY Fraud_Count DESC;
+
+-- 2. FRAUD BY STATE
+SELECT Transaction_Type,
+               COUNT(*) AS Total,
+               SUM(Is_Fraud) AS Fraud_Count,
+               ROUND(SUM(Is_Fraud)*100.0/COUNT(*),2) AS Fraud_Rate_Pct,
+               ROUND(SUM(CASE WHEN Is_Fraud=1 THEN Transaction_Amount ELSE 0 END),2) AS Fraud_Amount
+        FROM fraud 
+        GROUP BY Transaction_Type ORDER BY Fraud_Count DESC ;
 
 -- 3. FRAUD BY TRANSACTION TYPE
 SELECT
@@ -37,57 +36,46 @@ GROUP BY Transaction_Type
 ORDER BY Fraud_Count DESC;
 
 -- 4. FRAUD BY MERCHANT CATEGORY
-SELECT
-    Merchant_Category,
-    COUNT(*) AS Total,
-    SUM(Is_Fraud) AS Fraud_Count,
-    ROUND(SUM(Is_Fraud) * 100.0 / COUNT(*), 2) AS Fraud_Rate_Pct
-FROM transactions
-GROUP BY Merchant_Category
-ORDER BY Fraud_Rate_Pct DESC;
+
+ SELECT Merchant_Category,
+               COUNT(*) AS Total,
+               SUM(Is_Fraud) AS Fraud_Count,
+               ROUND(SUM(Is_Fraud)*100.0/COUNT(*),2) AS Fraud_Rate_Pct
+        FROM fraud GROUP BY Merchant_Category ORDER BY Fraud_Rate_Pct DESC ;
 
 -- 5. FRAUD BY DEVICE TYPE
-SELECT
-    Device_Type,
-    Transaction_Device,
-    COUNT(*) AS Total,
-    SUM(Is_Fraud) AS Fraud_Count,
-    ROUND(SUM(Is_Fraud) * 100.0 / COUNT(*), 2) AS Fraud_Rate_Pct
-FROM transactions
-GROUP BY Device_Type, Transaction_Device
-ORDER BY Fraud_Rate_Pct DESC;
+SELECT Transaction_Time,
+               COUNT(*) AS Total,
+               SUM(Is_Fraud) AS Fraud_Count,
+               ROUND(SUM(Is_Fraud)*100.0/COUNT(*),2) AS Fraud_Rate_Pct
+        FROM fraud GROUP BY Transaction_Time ORDER BY Transaction_Time;
 
 -- 6. FRAUD BY HOUR OF DAY (24-hour pattern)
-SELECT
-    Hour,
+SELECT Transaction_Time,
+               COUNT(*) AS Total,
+               SUM(Is_Fraud) AS Fraud_Count,
+               ROUND(SUM(Is_Fraud)*100.0/COUNT(*),2) AS Fraud_Rate_Pct
+        FROM fraud GROUP BY Transaction_Time ORDER BY Transaction_Time;
+-- 7. FRAUD BY AGE GROUP
+select Age,
+     case
+     when Age < 30 then 'young adlut'
+     when Age  = 30 and Age < 45 then 'adult'
+     when Age >= 45 and age < 60 then 'middle -aged '
+     else 'senior'
+	end as Age_group ,
     COUNT(*) AS Total,
     SUM(Is_Fraud) AS Fraud_Count,
     ROUND(SUM(Is_Fraud) * 100.0 / COUNT(*), 2) AS Fraud_Rate_Pct
-FROM transactions
-GROUP BY Hour
-ORDER BY Hour;
-
--- 7. FRAUD BY AGE GROUP
-SELECT
-    Age_Group,
-    COUNT(*) AS Total,
-    SUM(Is_Fraud) AS Fraud_Count,
-    ROUND(SUM(Is_Fraud) * 100.0 / COUNT(*), 2) AS Fraud_Rate_Pct,
-    ROUND(AVG(Transaction_Amount), 2) AS Avg_Transaction_Amount
-FROM transactions
-GROUP BY Age_Group
-ORDER BY Age_Group;
+     FROM bank GROUP BY Age  ORDER BY Age  ;
 
 -- 8. FRAUD BY ACCOUNT TYPE
-SELECT
-    Account_Type,
-    COUNT(*) AS Total,
-    SUM(Is_Fraud) AS Fraud_Count,
-    ROUND(SUM(Is_Fraud) * 100.0 / COUNT(*), 2) AS Fraud_Rate_Pct
-FROM transactions
-GROUP BY Account_Type
-ORDER BY Fraud_Count DESC;
-
+SELECT Account_Type,
+               COUNT(*) AS Total,
+               SUM(Is_Fraud) AS Fraud_Count,
+               ROUND(SUM(Is_Fraud)*100.0/COUNT(*),2) AS Fraud_Rate_Pct
+        FROM fraud  GROUP BY Account_Type ORDER BY Fraud_Count DESC ;
+   ;
 -- 9. HIGH-RISK STATE + TYPE CROSS-ANALYSIS
 SELECT
     State,
@@ -95,7 +83,7 @@ SELECT
     COUNT(*) AS Total,
     SUM(Is_Fraud) AS Fraud_Count,
     ROUND(SUM(Is_Fraud) * 100.0 / COUNT(*), 2) AS Fraud_Rate_Pct
-FROM transactions
+FROM fraud
 WHERE State IN (
     SELECT State FROM transactions GROUP BY State
     ORDER BY SUM(Is_Fraud) DESC LIMIT 5
@@ -105,26 +93,26 @@ ORDER BY State, Fraud_Rate_Pct DESC;
 
 -- 10. NIGHT-TIME FRAUD DEEP DIVE (Hours 22–4)
 SELECT
-    Hour,
+Transaction_time,
     State,
     COUNT(*) AS Total,
     SUM(Is_Fraud) AS Fraud_Count,
     ROUND(SUM(Is_Fraud) * 100.0 / COUNT(*), 2) AS Fraud_Rate_Pct
-FROM transactions
-WHERE Hour IN (22, 23, 0, 1, 2, 3, 4)
-GROUP BY Hour, State
+FROM fraud
+WHERE Transaction_time  IN (22, 23, 0, 1, 2, 3, 4)
+GROUP BY Transaction_time , State
 ORDER BY Fraud_Rate_Pct DESC
 LIMIT 20;
 
 -- 11. AMOUNT BUCKET RISK ANALYSIS
 SELECT
-    Amount_Bin,
+   Transaction_Amount ,
     COUNT(*) AS Total,
     SUM(Is_Fraud) AS Fraud_Count,
     ROUND(SUM(Is_Fraud) * 100.0 / COUNT(*), 2) AS Fraud_Rate_Pct
 FROM transactions
-GROUP BY Amount_Bin
-ORDER BY CASE Amount_Bin
+GROUP BY Transaction_Amount
+ORDER BY case  Transaction_Amount
     WHEN '<1K' THEN 1 WHEN '1K-5K' THEN 2 WHEN '5K-20K' THEN 3
     WHEN '20K-50K' THEN 4 WHEN '50K+' THEN 5 END;
 
@@ -135,8 +123,10 @@ SELECT
     COUNT(*) AS Total,
     SUM(Is_Fraud) AS Fraud_Count,
     ROUND(SUM(Is_Fraud) * 100.0 / COUNT(*), 2) AS Fraud_Rate_Pct
-FROM transactions
+FROM fraud
 GROUP BY State, Merchant_Category
 HAVING Total >= 50
 ORDER BY Fraud_Rate_Pct DESC
 LIMIT 10;
+
+   
