@@ -6,7 +6,7 @@
 
 ## 📋 Project Overview
 
-This project builds a comprehensive fraud detection and analytics system for LOL Bank Pvt. Ltd. using **200,000 bank transactions**. It covers data ingestion, cleaning, SQL-based analysis, and a production-ready interactive HTML dashboard with live filters.
+This project builds a comprehensive fraud detection and analytics system for LOL Bank Pvt. Ltd. using **200,000 bank transactions**. It covers data ingestion, cleaning, SQL-based analysis, and a production-ready interactive  dashboard with live filters.
 
 **Key Findings:**
 - **5.04% overall fraud rate** across 200,000 transactions
